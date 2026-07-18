@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Memory Gallery</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            scroll-behavior: smooth;
+        }
+        
+        /* Beautiful Gradient Header */
+        .gallery-header {
+            background: linear-gradient(135deg, #6f86ec 0%, #3a53dd 100%);
+            color: white;
+            padding: 3.5rem 0;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+
+        .gallery-header h1 {
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+        /* Search & Filter Toolbar */
+        .toolbar {
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+            margin-bottom: 2rem;
+            border: 1px solid rgba(0,0,0,0.02);
+        }
+
+        .search-input, .sort-select {
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            padding: 0.6rem 1.2rem;
+            background-color: #f8fafc;
+            transition: all 0.3s ease;
+        }
+
+        .search-input {
+            padding-left: 2.5rem;
+        }
+
+        .search-input:focus, .sort-select:focus {
+            box-shadow: 0 0 0 4px rgba(118, 75, 162, 0.1);
+            border-color: #2f2bfa;
+            background-color: white;
+        }
+
+        /* Year Section Headers */
+        .year-section-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .year-section-title::after {
+            content: "";
+            flex: 1;
+            margin-left: 1rem;
+            height: 2px;
+            background: linear-gradient(to right, #e2e8f0, transparent);
+            border-radius: 2px;
+        }
+
+        .year-badge {
+            background: #2c3e50;
+            color: white;
+            padding: 0.4rem 1.2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(44, 62, 80, 0.2);
+        }
+
+        /* Styling the Cards */
+        .memory-card {
+            border: none;
+            border-radius: 16px;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+            background: white;
+            transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .memory-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+
+        /* The Hover Fix Container */
+        .card-img-wrapper {
+            position: relative;
+            overflow: hidden;
+            height: 260px; /* Uniform height */
+            border-radius: 16px 16px 0 0;
+            background-color: #e2e8f0; /* Placeholder color while loading */
+        }
+
+        .zoom-container {
+            width: 100%;
+            height: 100%;
+            transition: transform 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+            position: relative;
+        }
+
+        .memory-card:hover .zoom-container {
+            transform: scale(1.06); /* Smooth, subtle zoom */
+        }
+
+        .memory-img {
+            height: 100%;
+            width: 100%;
+            object-fit: cover;
+        }
+
+        .date-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #1e293b;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            backdrop-filter: blur(8px);
+            z-index: 2;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .card-title {
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.4rem;
+        }
+
+        .location-text {
+            color: #ff3d3d;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Modal (Popup) Styling */
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+            overflow: hidden;
+            background-color: #f8fafc;
+        }
+        
+        .modal-body {
+            padding: 0;
+        }
+
+        .modal-image-large {
+            width: 100%;
+            max-height: 75vh;
+            object-fit: contain;
+            background: #0f172a;
+        }
+
+        .modal-info {
+            padding: 30px;
+        }
+
+        .btn-close-custom {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(15, 23, 42, 0.7);
+            color: white;
+            border-radius: 50%;
+            border: none;
+            backdrop-filter: blur(8px);
+            transition: background-color 0.2s ease;
+            pointer-events: auto;
+        }
+
+        .btn-close-custom:hover {
+            background-color: rgba(15, 23, 42, 0.95);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 5rem 1rem;
+            color: #94a3b8;
+            background: white;
+            border-radius: 16px;
+            border: 2px dashed #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Section -->
+    <header class="gallery-header">
+        <div class="container">
+            <h1><i class="fa-solid fa-images"></i> Gallery</h1>
+            <p class="lead mb-0 text-white-50">99% Vibe Coded.</p>
+        </div>
+    </header>
+
+    <div class="container mb-5">
+        
+        <!-- Toolbar: Search and Sort -->
+        <div class="toolbar row g-3 align-items-center">
+            <div class="col-md-7 col-lg-8">
+                <div class="position-relative">
+                    <i class="fa-solid fa-magnifying-glass position-absolute text-muted" style="top: 50%; transform: translateY(-50%); left: 18px;"></i>
+                    <input type="text" id="searchInput" class="form-control search-input" placeholder="Search by memory, location, or description...">
+                </div>
+            </div>
+            <div class="col-md-5 col-lg-4">
+                <div class="d-flex align-items-center">
+                    <i class="fa-solid fa-arrow-down-up-across-line text-muted me-2"></i>
+                    <select id="sortSelect" class="form-select sort-select text-secondary fw-bold w-100">
+                        <option value="newest">Sort: Newest First</option>
+                        <option value="oldest">Sort: Oldest First</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Counter -->
+        <div class="d-flex justify-content-between text-muted small mb-4 px-2">
+            <span id="resultCount" class="fw-bold tracking-wide"></span>
+        </div>
+
+        <!-- Gallery Container (Will hold Year Sections) -->
+        <div id="gallery-container">
+            <!-- Dynamic Year Sections will be generated here -->
+        </div>
+    </div>
+
+    <!-- The Lightbox Modal (Popup Viewer) -->
+    <div class="modal fade" id="memoryModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content shadow-lg">
+                <!-- Close Button Layered Over Image -->
+                <div class="position-absolute w-100 d-flex justify-content-end p-3" style="z-index: 10; pointer-events: none;">
+                    <button type="button" class="btn-close-custom shadow-sm" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="fa-solid fa-xmark fa-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="modal-body">
+                    <img src="" id="modalImage" class="modal-image-large" alt="Memory">
+                    <div class="modal-info">
+                        <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+                            <div>
+                                <h2 id="modalTitle" class="mb-1 fw-bold text-dark"></h2>
+                                <p class="location-text mb-0"><i class="fa-solid fa-location-dot"></i> <span id="modalLocation"></span></p>
+                            </div>
+                            <span id="modalDate" class="badge bg-primary rounded-pill px-4 py-2 fs-6 shadow-sm"></span>
+                        </div>
+                        <hr class="text-muted opacity-25">
+                        <p id="modalDescription" class="fs-5 text-secondary mt-3 lh-base"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap & Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Import our custom memory data -->
+    <script src="data.js"></script>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const container = document.getElementById('gallery-container');
+            const searchInput = document.getElementById('searchInput');
+            const sortSelect = document.getElementById('sortSelect');
+            const resultCount = document.getElementById('resultCount');
+            const memoryModal = new bootstrap.Modal(document.getElementById('memoryModal'));
+
+            // State variable
+            let currentMemories = [];
+
+            // Function to render the categorized gallery
+            function renderGallery(sortOrder) {
+                container.innerHTML = '';
+                
+                // Handle Empty State
+                if (currentMemories.length === 0) {
+                    resultCount.textContent = "0 memories found";
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fa-regular fa-folder-open fa-4x mb-4 text-muted opacity-50"></i>
+                            <h3 class="fw-bold text-dark">No memories found</h3>
+                            <p>Try adjusting your search keywords or filters.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Update Counter
+                resultCount.textContent = `Showing ${currentMemories.length} ${currentMemories.length === 1 ? 'memory' : 'memories'}`;
+
+                // 1. Group by Year
+                const groupedMemories = {};
+                
+                currentMemories.forEach((memory, index) => {
+                    // Tag it with its exact index in the current sorted list so the modal triggers the right data
+                    memory.renderIndex = index;
+                    
+                    const dateObj = new Date(memory.date);
+                    const year = isNaN(dateObj) ? "Other" : dateObj.getFullYear().toString();
+                    
+                    if (!groupedMemories[year]) {
+                        groupedMemories[year] = [];
+                    }
+                    groupedMemories[year].push(memory);
+                });
+
+                // 2. Sort the Year Categories
+                let years = Object.keys(groupedMemories);
+                years.sort((a, b) => {
+                    if (a === "Other") return 1; // Always push "Other/Unknown dates" to the bottom
+                    if (b === "Other") return -1;
+                    return sortOrder === 'newest' ? b - a : a - b;
+                });
+
+                // 3. Generate HTML for each Year Section
+                years.forEach(year => {
+                    // Create Section Header
+                    let sectionHTML = `
+                        <div class="year-section mb-5">
+                            <h2 class="year-section-title">
+                                <span class="year-badge"><i class="fa-regular fa-calendar-days me-2"></i>${year}</span>
+                            </h2>
+                            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                    `;
+
+                    // Add Cards for this specific year
+                    groupedMemories[year].forEach(memory => {
+                        sectionHTML += `
+                            <div class="col">
+                                <div class="card memory-card h-100" onclick="openModal(${memory.renderIndex})">
+                                    <div class="card-img-wrapper">
+                                        <div class="zoom-container">
+                                            <span class="date-badge"><i class="fa-regular fa-calendar"></i> ${memory.date}</span>
+                                            <img src="${memory.image}" class="memory-img" alt="${memory.title}" loading="lazy">
+                                        </div>
+                                    </div>
+                                    <div class="card-body d-flex flex-column">
+                                        <h5 class="card-title text-truncate">${memory.title}</h5>
+                                        <p class="location-text"><i class="fa-solid fa-location-dot"></i> ${memory.location}</p>
+                                        <p class="card-text text-muted mb-0 flex-grow-1" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                                            ${memory.description}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    // Close the row and section
+                    sectionHTML += `</div></div>`;
+                    container.innerHTML += sectionHTML;
+                });
+            }
+
+            // Function to handle Search & Sort logic
+            function updateGallery() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const sortOrder = sortSelect.value;
+
+                // Filter
+                currentMemories = memories.filter(memory => {
+                    return memory.title.toLowerCase().includes(searchTerm) || 
+                           memory.location.toLowerCase().includes(searchTerm) || 
+                           memory.description.toLowerCase().includes(searchTerm) ||
+                           memory.date.toLowerCase().includes(searchTerm);
+                });
+
+                // Sort the raw list before grouping
+                currentMemories.sort((a, b) => {
+                    const dateA = new Date(a.date);
+                    const dateB = new Date(b.date);
+                    
+                    if(isNaN(dateA) || isNaN(dateB)) return 0; 
+                    return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+                });
+
+                // Render with grouping
+                renderGallery(sortOrder);
+            }
+
+            // Listeners
+            searchInput.addEventListener('input', updateGallery);
+            sortSelect.addEventListener('change', updateGallery);
+
+            // Handle opening the modal accurately
+            window.openModal = function(index) {
+                const memory = currentMemories[index];
+                document.getElementById('modalImage').src = memory.image;
+                document.getElementById('modalTitle').textContent = memory.title;
+                document.getElementById('modalDate').textContent = memory.date;
+                document.getElementById('modalLocation').textContent = memory.location;
+                document.getElementById('modalDescription').textContent = memory.description;
+                
+                memoryModal.show();
+            };
+
+            // Initial load
+            updateGallery();
+        });
+    </script>
+</body>
+</html>
